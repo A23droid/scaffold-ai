@@ -1,12 +1,15 @@
-import type { Metadata } from "next";
+"use client";
+
 import type { ReactNode } from "react";
 import { ChevronDown, LogOut } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-
-export const metadata: Metadata = { title: "Settings" };
+import { useStudentData } from "@/hooks/useStudentData";
+import { apiUpdateStudentProfile } from "@/lib/api";
+import React, { useState } from "react";
+import { Loader2 } from "lucide-react";
 
 const gradeOptions = ["Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12"];
 const boardOptions = ["CBSE", "ICSE", "State Board", "IB", "Cambridge"];
@@ -29,24 +32,61 @@ const notifications = [
 ];
 
 export default function Page() {
+  const { profile, loading, mutateProfile } = useStudentData();
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!profile) return;
+    setIsSaving(true);
+    try {
+      const formData = new FormData(e.currentTarget);
+      const paceMap: Record<string, string> = { "Relaxed": "SLOW", "Balanced": "MEDIUM", "Fast": "FAST" };
+      const updates = {
+        grade: formData.get("grade") as string,
+        board: formData.get("board") as string,
+        preferredLanguage: formData.get("language") as string,
+        learningPace: paceMap[formData.get("pace") as string] || "MEDIUM",
+        name: formData.get("name") as string,
+        email: formData.get("email") as string,
+      };
+      await apiUpdateStudentProfile(profile.id, updates);
+      mutateProfile(updates);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <AppShell headerTitle="Settings">
+        <div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-purple-500" /></div>
+      </AppShell>
+    );
+  }
+
   return (
     <AppShell headerTitle="Settings" headerSubtitle="Customize preferences">
       <div className="mx-auto w-full max-w-5xl px-1 py-8 sm:px-3 md:py-12">
-        <header className="mb-10 max-w-2xl space-y-3 md:mb-12">
-          <h1 className="font-[var(--font-serif-editorial)] text-5xl font-semibold leading-[0.96] tracking-normal text-[hsl(var(--foreground))] sm:text-6xl">
-            Settings
-          </h1>
-          <p className="max-w-xl text-base leading-7 text-[hsl(var(--muted-foreground))]">
-            Customize your learning experience and preferences.
-          </p>
+        <header className="mb-10 flex max-w-2xl flex-col items-start justify-between gap-4 md:mb-12 md:flex-row md:items-end">
+          <div className="space-y-3">
+            <h1 className="font-[var(--font-serif-editorial)] text-5xl font-semibold leading-[0.96] tracking-normal text-[hsl(var(--foreground))] sm:text-6xl">
+              Settings
+            </h1>
+            <p className="max-w-xl text-base leading-7 text-[hsl(var(--muted-foreground))]">
+              Customize your learning experience and preferences.
+            </p>
+          </div>
         </header>
 
-        <div className="grid gap-5 lg:grid-cols-[1fr_1fr]">
+        <form onSubmit={handleSubmit} className="grid gap-5 lg:grid-cols-[1fr_1fr]">
           <SettingsCard title="Academic Profile">
             <div className="grid gap-4 sm:grid-cols-3">
-              <SelectField label="Grade" id="grade" options={gradeOptions} />
-              <SelectField label="Board / Curriculum" id="board" options={boardOptions} />
-              <SelectField label="Preferred Language" id="language" options={languageOptions} />
+              <SelectField label="Grade" name="grade" id="grade" options={gradeOptions} defaultValue={profile?.grade || gradeOptions[0]} />
+              <SelectField label="Board" name="board" id="board" options={boardOptions} defaultValue={profile?.board || boardOptions[0]} />
+              <SelectField label="Language" name="language" id="language" options={languageOptions} defaultValue={profile?.preferredLanguage || languageOptions[0]} />
             </div>
           </SettingsCard>
 
@@ -71,38 +111,34 @@ export default function Page() {
                 <legend className="text-sm font-medium text-[hsl(var(--foreground))]">
                   Tutoring Pace
                 </legend>
-                <SegmentedRadio name="pace" options={tutoringPace} defaultValue="Balanced" />
-              </fieldset>
-            </div>
-          </SettingsCard>
-
-          <SettingsCard title="Notifications">
-            <div className="divide-y divide-[hsl(var(--border-subtle))]">
-              {notifications.map((notification, index) => (
-                <ToggleRow
-                  key={notification}
-                  label={notification}
-                  defaultChecked={index !== 1}
+                <SegmentedRadio 
+                  name="pace" 
+                  options={tutoringPace} 
+                  defaultValue={{ "SLOW": "Relaxed", "MEDIUM": "Balanced", "FAST": "Fast" }[profile?.learningPace || "MEDIUM"] || "Balanced"} 
                 />
-              ))}
+              </fieldset>
             </div>
           </SettingsCard>
 
           <SettingsCard title="Account">
             <div className="space-y-5">
               <div className="grid gap-4 sm:grid-cols-2">
-                <TextField label="Name" id="name" defaultValue="Anikesh Das" />
-                <TextField label="Email" id="email" defaultValue="anikesh@example.com" type="email" />
+                <TextField label="Name" name="name" id="name" defaultValue={profile?.name || ""} />
+                <TextField label="Email" name="email" id="email" defaultValue={profile?.email || ""} type="email" />
               </div>
-              <div className="flex justify-end border-t border-[hsl(var(--border-subtle))] pt-5">
-                <Button variant="outline" className="bg-white/45 text-[hsl(var(--danger))] hover:bg-[hsl(var(--danger)/0.08)]">
-                  <LogOut className="h-4 w-4" />
+              <div className="flex items-center justify-between border-t border-[hsl(var(--border-subtle))] pt-5">
+                <Button variant="outline" type="button" className="bg-white/45 text-[hsl(var(--danger))] hover:bg-[hsl(var(--danger)/0.08)]">
+                  <LogOut className="mr-2 h-4 w-4" />
                   Sign Out
+                </Button>
+                <Button type="submit" disabled={isSaving} className="bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg px-6">
+                  {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  {isSaving ? "Saving..." : "Save Changes"}
                 </Button>
               </div>
             </div>
           </SettingsCard>
-        </div>
+        </form>
       </div>
     </AppShell>
   );
@@ -134,12 +170,16 @@ function SettingsCard({
 
 function SelectField({
   label,
+  name,
   id,
   options,
+  defaultValue,
 }: {
   label: string;
+  name: string;
   id: string;
   options: string[];
+  defaultValue?: string;
 }) {
   return (
     <label className="block space-y-2" htmlFor={id}>
@@ -147,7 +187,8 @@ function SelectField({
       <span className="relative block">
         <select
           id={id}
-          defaultValue={options[0]}
+          name={name}
+          defaultValue={defaultValue || options[0]}
           className="h-12 w-full appearance-none rounded-[14px] border border-[hsl(var(--border))] bg-[hsl(var(--background)/0.76)] px-4 pr-10 text-sm font-medium text-[hsl(var(--foreground))] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] outline-none transition focus:border-[hsl(var(--primary)/0.65)] focus:ring-4 focus:ring-[hsl(var(--primary)/0.12)]"
         >
           {options.map((option) => (
@@ -162,11 +203,13 @@ function SelectField({
 
 function TextField({
   label,
+  name,
   id,
   defaultValue,
   type = "text",
 }: {
   label: string;
+  name: string;
   id: string;
   defaultValue: string;
   type?: string;
@@ -176,6 +219,7 @@ function TextField({
       <span className="text-xs font-medium text-[hsl(var(--muted-foreground))]">{label}</span>
       <input
         id={id}
+        name={name}
         type={type}
         defaultValue={defaultValue}
         className="h-12 w-full rounded-[14px] border border-[hsl(var(--border))] bg-[hsl(var(--background)/0.76)] px-4 text-sm font-medium text-[hsl(var(--foreground))] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] outline-none transition placeholder:text-[hsl(var(--muted-foreground))] focus:border-[hsl(var(--primary)/0.65)] focus:ring-4 focus:ring-[hsl(var(--primary)/0.12)]"

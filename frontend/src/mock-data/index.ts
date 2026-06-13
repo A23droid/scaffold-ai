@@ -354,7 +354,6 @@ export const STUDENT_NAV_SECTIONS: NavSection[] = [
     id: "main",
     items: [
       { id: "dashboard", label: "Dashboard", href: "/dashboard", icon: "LayoutDashboard" },
-      { id: "session", label: "Start Learning", href: "/session", icon: "Sparkles" },
       { id: "stuck-map", label: "Stuck Map", href: "/stuck-map", icon: "Map" },
       { id: "history", label: "History", href: "/history", icon: "Clock" },
     ],

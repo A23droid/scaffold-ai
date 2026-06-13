@@ -6,7 +6,9 @@ import { cn } from "@/lib/utils";
 import { useSidebar } from "@/lib/sidebar";
 import { useTheme } from "@/lib/theme";
 import { Avatar, Tooltip } from "@/components/primitives";
-import { MOCK_STUDENT } from "@/mock-data";
+import { useSession } from "next-auth/react";
+import { useStudentData } from "@/hooks/useStudentData";
+import { Flame } from "lucide-react";
 
 interface HeaderProps {
   title?: string;
@@ -18,7 +20,11 @@ interface HeaderProps {
 export function Header({ title, subtitle, actions, className }: HeaderProps) {
   const { toggleMobile } = useSidebar();
   const { resolvedTheme, toggleTheme } = useTheme();
-  const user = MOCK_STUDENT;
+  const { data: session } = useSession();
+  const { profile } = useStudentData();
+  const userName = session?.user?.name || "Student";
+  const userEmail = session?.user?.email || "";
+  const userInitials = userName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase();
 
   return (
     <header
@@ -53,18 +59,20 @@ export function Header({ title, subtitle, actions, className }: HeaderProps) {
         )}
       </div>
 
-      {/* Search — desktop */}
-      <div className="hidden md:flex items-center gap-2 h-9 px-3 rounded-[var(--radius-md)] bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))] text-sm cursor-pointer hover:bg-[hsl(var(--surface-3))] transition-colors min-w-[200px]">
-        <Search className="h-4 w-4 flex-shrink-0" />
-        <span className="flex-1 text-xs">Search concepts, sessions…</span>
-        <kbd className="text-[10px] bg-[hsl(var(--surface-3))] px-1.5 py-0.5 rounded-sm font-mono">⌘K</kbd>
-      </div>
+      {/* Search — desktop (Removed) */}
 
-      {/* Right actions */}
-      <div className="flex items-center gap-1.5">
-        {actions}
+      <div className="flex items-center gap-1.5 sm:gap-2">
+        {/* Streak Counter */}
+        {profile && profile.streak > 0 && (
+          <Tooltip content="Daily Streak">
+            <div className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-orange-50 text-orange-600 border border-orange-100 mr-2 shadow-sm">
+              <Flame className="h-3.5 w-3.5 fill-orange-500 text-orange-500" />
+              <span className="text-xs font-bold">{profile.streak}</span>
+            </div>
+          </Tooltip>
+        )}
 
-        {/* Theme toggle */}
+        {actions && <div className="flex items-center mr-1">{actions}</div>}
         <Tooltip content={resolvedTheme === "light" ? "Switch to dark" : "Switch to light"}>
           <button
             onClick={toggleTheme}
@@ -79,17 +87,11 @@ export function Header({ title, subtitle, actions, className }: HeaderProps) {
           </button>
         </Tooltip>
 
-        {/* Notifications */}
-        <Tooltip content="Notifications">
-          <button className="relative h-9 w-9 flex items-center justify-center rounded-[var(--radius-sm)] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--foreground))] transition-colors">
-            <Bell className="h-4.5 w-4.5" />
-            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[hsl(var(--primary))] ring-2 ring-[hsl(var(--background))]" />
-          </button>
-        </Tooltip>
+        {/* Notifications (Removed) */}
 
         {/* Avatar */}
         <button className="ml-1 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))]">
-          <Avatar src={user.avatar} name={user.name} size="sm" />
+          <Avatar name={userName} size="sm" />
         </button>
       </div>
     </header>

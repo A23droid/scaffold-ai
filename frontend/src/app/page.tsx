@@ -22,11 +22,19 @@ import {
   Calendar
 } from "lucide-react";
 
-import { 
-  MOCK_STUDENT, 
-  MOCK_STUCK_POINTS, 
-  MOCK_SUBJECT_PROGRESS 
-} from "@/mock-data";
+// Demo constants for the landing page marketing showcase
+const DEMO_STUDENT = { name: "Aria Chen", grade: "Grade 9", level: 12, xp: 5850, streak: 14 };
+const DEMO_STUCK_POINTS = [
+  { id: "s1", concept: "Completing the Square", subject: "Mathematics", severity: "deep", description: "Confused about rearranging when leading coefficient ≠ 1" },
+  { id: "s2", concept: "Unit Conversion", subject: "Physics", severity: "moderate", description: "Friction multiplying velocity values by metric powers of ten." },
+];
+const DEMO_SUBJECT_PROGRESS = [
+  { subject: "Maths", masteryPercent: 74 },
+  { subject: "Physics", masteryPercent: 61 },
+  { subject: "Chemistry", masteryPercent: 82 },
+  { subject: "Biology", masteryPercent: 55 },
+  { subject: "English", masteryPercent: 90 },
+];
 
 export default function LandingPage() {
   const [email, setEmail] = useState("");
@@ -62,8 +70,6 @@ export default function LandingPage() {
     <div className="relative min-h-screen overflow-x-hidden text-zinc-900 bg-gradient-to-br from-[#f3f0ff] via-[#fae8ff] to-[#fdf2f8]">
       
       {/* BACKGROUND ACCENTS matching the reference soft blur glow */}
-      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-purple-300/10 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute top-[20%] right-1/4 w-[400px] h-[400px] bg-pink-300/10 rounded-full blur-[100px] pointer-events-none" />
       
       {/* NAVBAR */}
       <header className="w-full py-6 px-6 md:px-12 relative z-50">
@@ -96,7 +102,7 @@ export default function LandingPage() {
               <button className="text-zinc-600 hover:text-zinc-900 text-sm font-medium">Menu</button>
             </div>
             
-            <Link href="/dashboard" className="bg-white hover:bg-zinc-50 border border-zinc-200/80 text-zinc-900 px-5 py-2 rounded-full text-sm font-semibold shadow-[0_2px_6px_rgba(0,0,0,0.03)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.05)] active:scale-[0.98] transition-all">
+            <Link href="/register" className="bg-white hover:bg-zinc-50 border border-zinc-200/80 text-zinc-900 px-5 py-2 rounded-full text-sm font-semibold shadow-[0_2px_6px_rgba(0,0,0,0.03)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.05)] active:scale-[0.98] transition-all">
               Get Started
             </Link>
           </div>
@@ -232,8 +238,8 @@ export default function LandingPage() {
                         AC
                       </div>
                       <div className="overflow-hidden">
-                        <h4 className="text-xs font-semibold text-zinc-800 truncate">{MOCK_STUDENT.name}</h4>
-                        <p className="text-[10px] text-zinc-500">{MOCK_STUDENT.grade}</p>
+                        <h4 className="text-xs font-semibold text-zinc-800 truncate">{DEMO_STUDENT.name}</h4>
+                        <p className="text-[10px] text-zinc-500">{DEMO_STUDENT.grade}</p>
                       </div>
                     </div>
 
@@ -269,13 +275,13 @@ export default function LandingPage() {
                     <div className="p-2.5 bg-gradient-to-br from-amber-50 to-orange-50/50 rounded-lg border border-amber-200/50 text-[10px]">
                       <div className="flex items-center gap-1 font-semibold text-amber-800">
                         <span>🔥</span>
-                        <span>{MOCK_STUDENT.streak} Days Streak</span>
+                      <span>🔥 {DEMO_STUDENT.streak} Days Streak</span>
                       </div>
                       <p className="text-amber-700/80 mt-0.5">Keep it up! Next badge in 3 days.</p>
                     </div>
 
                     <div className="text-[10px] text-zinc-400 text-center font-medium">
-                      Level {MOCK_STUDENT.level} • {MOCK_STUDENT.xp} XP
+                      Level {DEMO_STUDENT.level} • {DEMO_STUDENT.xp} XP
                     </div>
                   </div>
                 </aside>
@@ -335,9 +341,9 @@ export default function LandingPage() {
                           <div className="bg-white border border-zinc-200/50 rounded-xl p-4 shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex flex-col justify-between">
                             <div className="flex items-center justify-between">
                               <span className="text-[11px] font-semibold tracking-wider text-zinc-400 uppercase">Learning Streak</span>
-                              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-bold">
+                                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-bold">
                                 <Flame className="w-3.5 h-3.5 fill-amber-500 stroke-amber-500" />
-                                <span>{MOCK_STUDENT.streak} Days</span>
+                                <span>{DEMO_STUDENT.streak} Days</span>
                               </div>
                             </div>
                             
@@ -370,7 +376,7 @@ export default function LandingPage() {
                           </div>
 
                           <div className="space-y-2.5">
-                            {MOCK_STUCK_POINTS.map((sp) => {
+                            {DEMO_STUCK_POINTS.map((sp) => {
                               const isExpanded = expandedStuckPoint === sp.id;
                               return (
                                 <div 
@@ -528,7 +534,7 @@ export default function LandingPage() {
 
                         <div className="bg-white border border-zinc-200/50 rounded-xl p-5 shadow-sm space-y-4">
                           <div className="grid grid-cols-5 gap-3">
-                            {MOCK_SUBJECT_PROGRESS.map((sub) => (
+                            {DEMO_SUBJECT_PROGRESS.map((sub) => (
                               <div key={sub.subject} className="border border-zinc-100 rounded-lg p-3 text-center space-y-1 hover:border-purple-200 transition-colors">
                                 <div className="text-[10px] text-zinc-400 font-semibold uppercase">{sub.subject}</div>
                                 <div className="text-base font-extrabold text-zinc-800">{sub.masteryPercent}%</div>
@@ -600,12 +606,12 @@ export default function LandingPage() {
                   </div>
                   <div>
                     <h5 className="text-[9px] font-bold text-zinc-800">Aria Chen</h5>
-                    <p className="text-[7px] text-zinc-400">Level {MOCK_STUDENT.level} • {MOCK_STUDENT.grade}</p>
+                    <p className="text-[7px] text-zinc-400">Level {DEMO_STUDENT.level} • {DEMO_STUDENT.grade}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-0.5 text-amber-600 text-[8px] font-extrabold bg-amber-50 px-1 py-0.2 rounded border border-amber-200">
                   <span>🔥</span>
-                  <span>{MOCK_STUDENT.streak}</span>
+                  <span>{DEMO_STUDENT.streak}</span>
                 </div>
               </div>
 
@@ -646,7 +652,7 @@ export default function LandingPage() {
                 <div className="bg-white border border-zinc-200/50 p-2.5 rounded-xl space-y-1.5">
                   <span className="text-[7px] font-bold uppercase text-zinc-400 tracking-wider block">Subject Mastery</span>
                   <div className="space-y-1">
-                    {MOCK_SUBJECT_PROGRESS.map((sub) => (
+                    {DEMO_SUBJECT_PROGRESS.map((sub) => (
                       <div key={sub.subject} className="flex items-center justify-between text-[8px]">
                         <span className="text-zinc-600 font-medium">{sub.subject}</span>
                         <div className="flex items-center gap-1.5 w-1/2">

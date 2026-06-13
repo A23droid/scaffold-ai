@@ -18,6 +18,7 @@ import {
 import { AnimatePresence, motion } from "framer-motion";
 
 import { AppShell } from "@/components/layout/AppShell";
+import { useStudentData } from "@/hooks/useStudentData";
 
 interface LearningSession {
   id: string;
@@ -102,30 +103,29 @@ const HISTORICAL_SESSIONS: LearningSession[] = [
 ];
 
 export default function HistoryPage() {
+  const { sessions, loading } = useStudentData();
   const [searchQuery, setSearchQuery] = useState("");
-  const [subjectFilter, setSubjectFilter] = useState<"All" | "Mathematics" | "Physics" | "Chemistry">("All");
-  const [outcomeFilter, setOutcomeFilter] = useState<"All" | "Resolved" | "Partially Resolved" | "Needs Review">("All");
-  const [selectedSessionId, setSelectedSessionId] = useState<string | null>("hist-1");
+  const [subjectFilter, setSubjectFilter] = useState("All");
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
 
   // Get active selected session
-  const selectedSession = HISTORICAL_SESSIONS.find((s) => s.id === selectedSessionId);
+  const selectedSession = sessions.find((s) => s.id === selectedSessionId);
 
   // Dynamic filter logic
-  const filteredSessions = HISTORICAL_SESSIONS.filter((session) => {
-    const matchesSearch = session.topic.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          session.originalQuestion.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesSubject = subjectFilter === "All" || session.subject === subjectFilter;
-    const matchesOutcome = outcomeFilter === "All" || session.outcome === outcomeFilter;
-    return matchesSearch && matchesSubject && matchesOutcome;
+  const filteredSessions = sessions.filter((s) => {
+    const matchesSearch =
+      (s.topic || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (s.subject || "").toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSubject = subjectFilter === "All" || s.subject === subjectFilter;
+    return matchesSearch && matchesSubject;
   });
 
-  return (
-    <AppShell headerTitle="Session History" headerSubtitle="Journal of past learning worksheets & reflections">
-      
-      {/* Background Soft Glow Accents */}
-      <div className="absolute top-12 left-1/3 w-[450px] h-[450px] bg-purple-300/10 rounded-full blur-[100px] pointer-events-none -z-10" />
-      <div className="absolute bottom-20 right-1/4 w-[400px] h-[400px] bg-pink-300/10 rounded-full blur-[100px] pointer-events-none -z-10" />
+  // Get unique subjects for filter pills
+  const subjects = ["All", ...Array.from(new Set(sessions.map((s) => s.subject).filter(Boolean) as string[]))];
 
+  return (
+    <AppShell headerTitle="Learning History" headerSubtitle="Your Past Socratic Explorations">
+      
       {/* Main Page Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-7xl mx-auto pb-12">
         
@@ -160,7 +160,7 @@ export default function HistoryPage() {
 
               {/* Subject Filters */}
               <div className="flex bg-zinc-100 p-0.5 rounded-lg text-xs font-semibold self-start md:self-auto overflow-x-auto">
-                {(["All", "Mathematics", "Physics", "Chemistry"] as const).map((sub) => (
+                {subjects.map((sub) => (
                   <button
                     key={sub}
                     onClick={() => setSubjectFilter(sub)}
@@ -172,23 +172,8 @@ export default function HistoryPage() {
               </div>
             </div>
 
-            {/* Outcome Filters */}
-            <div className="flex items-center gap-2 overflow-x-auto pt-1 border-t border-zinc-50 text-xs font-medium">
-              <span className="text-zinc-400 text-[10px] uppercase font-bold tracking-wider shrink-0 pr-1">Outcome:</span>
-              {(["All", "Resolved", "Partially Resolved", "Needs Review"] as const).map((out) => (
-                <button
-                  key={out}
-                  onClick={() => setOutcomeFilter(out)}
-                  className={`px-3 py-1 rounded-full border transition-all text-[10px] whitespace-nowrap ${
-                    outcomeFilter === out 
-                      ? 'bg-purple-50 border-purple-200 text-purple-700 font-bold' 
-                      : 'bg-white border-zinc-200 text-zinc-650 hover:bg-zinc-50'
-                  }`}
-                >
-                  {out}
-                </button>
-              ))}
-            </div>
+
+
           </div>
 
           {/* Sessions List Table Card */}
@@ -199,61 +184,51 @@ export default function HistoryPage() {
                   <tr className="border-b border-zinc-100 text-zinc-400 font-bold uppercase tracking-wider text-[9px] pb-2">
                     <th className="py-2.5">Topic / Subject</th>
                     <th className="py-2.5">Date</th>
-                    <th className="py-2.5">Outcome</th>
-                    <th className="py-2.5">Confidence Change</th>
-                    <th className="py-2.5">Mastery Change</th>
+                    <th className="py-2.5">Intent</th>
+                    <th className="py-2.5">Status</th>
                     <th className="py-2.5 text-right"><span className="sr-only">Actions</span></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-55">
                   {filteredSessions.length > 0 ? (
-                    filteredSessions.map((session) => (
-                      <tr 
-                        key={session.id} 
-                        onClick={() => setSelectedSessionId(session.id)}
-                        className={`hover:bg-zinc-50/70 transition-colors cursor-pointer ${selectedSessionId === session.id ? 'bg-purple-50/20' : ''}`}
+                    filteredSessions.map((s) => (
+                      <tr
+                        key={s.id}
+                        onClick={() => setSelectedSessionId(s.id)}
+                        className={`hover:bg-zinc-50/70 transition-colors cursor-pointer ${selectedSessionId === s.id ? 'bg-purple-50/20' : ''}`}
                       >
                         <td className="py-4">
-                          <div className="font-semibold text-zinc-900">{session.topic}</div>
-                          <div className="text-[10px] text-zinc-400 font-medium">{session.subject}</div>
+                          <div className="font-semibold text-zinc-900">{s.topic || "General Session"}</div>
+                          <div className="text-[10px] text-zinc-400 font-medium">{s.subject || "—"}</div>
                         </td>
                         <td className="py-4 text-zinc-500 font-medium">
-                          {session.date}
+                          {s.createdAt ? new Date(s.createdAt).toLocaleDateString() : "—"}
                         </td>
                         <td className="py-4">
                           <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-bold border uppercase tracking-wider ${
-                            session.outcome === 'Resolved' ? 'bg-emerald-50 border-emerald-250 text-emerald-700' :
-                            session.outcome === 'Partially Resolved' ? 'bg-amber-50 border-amber-250 text-amber-700' :
-                            'bg-red-50 border-red-250 text-red-700'
+                            s.intent === "CONCEPT_UNDERSTANDING" ? 'bg-purple-50 border-purple-200 text-purple-700' :
+                            s.intent === "PROBLEM_SOLVING" ? 'bg-blue-50 border-blue-200 text-blue-700' :
+                            'bg-zinc-50 border-zinc-200 text-zinc-600'
                           }`}>
-                            <span className={`w-1 h-1 rounded-full ${
-                              session.outcome === 'Resolved' ? 'bg-emerald-500' :
-                              session.outcome === 'Partially Resolved' ? 'bg-amber-500' :
-                              'bg-red-500'
-                            }`} />
-                            <span>{session.outcome}</span>
+                            {s.intent === "CONCEPT_UNDERSTANDING" ? "Concept" : s.intent === "PROBLEM_SOLVING" ? "Problem" : "General"}
                           </span>
                         </td>
-                        <td className={`py-4 font-bold text-xs ${
-                          session.confidenceChange.startsWith('+') ? 'text-emerald-600' : 'text-rose-500'
-                        }`}>
-                          {session.confidenceChange}
-                        </td>
-                        <td className="py-4 font-bold text-xs text-purple-600">
-                          {session.masteryChange}
+                        <td className="py-4">
+                          <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${
+                            s.status === "COMPLETED" ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-amber-50 border-amber-200 text-amber-700'
+                          }`}>
+                            {s.status}
+                          </span>
                         </td>
                         <td className="py-4 text-right pr-2">
-                          <ChevronRight className={`w-4 h-4 text-zinc-400 transform transition-transform ${
-                            selectedSessionId === session.id ? 'translate-x-1 text-purple-500' : ''
-                          }`} />
+                          <ChevronRight className={`w-4 h-4 text-zinc-400 transform transition-transform ${selectedSessionId === s.id ? 'translate-x-1 text-purple-500' : ''}`} />
                         </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={6} className="py-12 text-center text-zinc-400">
-                        <Info className="w-6 h-6 mx-auto mb-2 text-zinc-350" />
-                        <p className="text-xs">No learning sessions match your active filters.</p>
+                      <td colSpan={5} className="py-12 text-center text-zinc-400">
+                        <p className="text-xs">{loading ? "Loading sessions…" : sessions.length === 0 ? "No sessions yet. Start learning!" : "No sessions match your filters."}</p>
                       </td>
                     </tr>
                   )}
@@ -267,80 +242,42 @@ export default function HistoryPage() {
         {/* RIGHT COLUMN DETAIL PANEL (1/3 width, conditional overlay/split) */}
         <AnimatePresence>
           {selectedSession && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
               transition={{ duration: 0.25 }}
               className="lg:col-span-1 bg-white border border-zinc-200/60 rounded-2xl p-6 shadow-[0_8px_30px_rgba(120,80,200,0.03)] space-y-6 h-fit relative"
             >
-              {/* Close Button */}
-              <button 
+              <button
                 onClick={() => setSelectedSessionId(null)}
                 className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-zinc-100 text-zinc-400 hover:text-zinc-700 transition-colors"
-                title="Close details"
               >
                 <X className="w-4 h-4" />
               </button>
 
-              {/* Title & Subject */}
               <div className="space-y-1 pr-6">
                 <span className="text-[9px] font-bold text-purple-600 uppercase tracking-widest block">{selectedSession.subject} History</span>
-                <h3 className="text-lg font-bold text-zinc-800 leading-tight">
-                  {selectedSession.topic} Session
-                </h3>
-                <p className="text-[10px] text-zinc-405 font-medium">Completed {selectedSession.date}</p>
-              </div>
-
-              {/* Stats highlights */}
-              <div className="grid grid-cols-2 gap-3 border-t border-b border-zinc-100 py-3.5">
-                <div className="bg-zinc-50/50 p-2.5 rounded-xl text-center border border-zinc-150">
-                  <span className="text-[8px] font-bold text-zinc-400 uppercase tracking-wider block">Confidence Shift</span>
-                  <span className={`text-base font-extrabold block mt-0.5 ${
-                    selectedSession.confidenceChange.startsWith('+') ? 'text-emerald-600' : 'text-rose-500'
-                  }`}>{selectedSession.confidenceChange}</span>
-                </div>
-                <div className="bg-zinc-50/50 p-2.5 rounded-xl text-center border border-zinc-150">
-                  <span className="text-[8px] font-bold text-zinc-400 uppercase tracking-wider block">Mastery Gain</span>
-                  <span className="text-base font-extrabold text-purple-700 block mt-0.5">{selectedSession.masteryChange}</span>
-                </div>
-              </div>
-
-              {/* Original Question */}
-              <div className="space-y-1.5">
-                <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider block">Original Question</span>
-                <div 
-                  className="text-base font-light text-zinc-800 bg-slate-50/50 border border-zinc-150 rounded-xl p-3 leading-tight"
-                  style={{ fontFamily: 'var(--font-serif-editorial)' }}
-                >
-                  {selectedSession.originalQuestion}
-                </div>
-              </div>
-
-              {/* Socratic Diagnosis */}
-              <div className="space-y-1.5">
-                <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider block">AI Diagnosis</span>
-                <div className="flex items-start gap-2 bg-purple-50/30 border border-purple-100/50 rounded-xl p-3 text-xs leading-relaxed text-zinc-650">
-                  <Sparkles className="w-4 h-4 text-purple-500 shrink-0 mt-0.5" />
-                  <span>{selectedSession.diagnosis}</span>
-                </div>
-              </div>
-
-              {/* Key Misconception */}
-              <div className="space-y-1.5">
-                <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider block">Key Misconception Tracked</span>
-                <div className="flex items-start gap-2 bg-pink-50/30 border border-pink-100/50 rounded-xl p-3 text-xs leading-relaxed text-zinc-650">
-                  <AlertTriangle className="w-4 h-4 text-pink-500 shrink-0 mt-0.5" />
-                  <span>{selectedSession.keyMisconception}</span>
-                </div>
-              </div>
-
-              {/* Reflection Summary */}
-              <div className="space-y-1.5">
-                <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider block">Reflection Summary</span>
-                <p className="text-xs text-zinc-600 bg-zinc-50 border border-zinc-150 rounded-xl p-3 leading-relaxed italic">
-                  "{selectedSession.reflectionSummary}"
+                <h3 className="text-lg font-bold text-zinc-800 leading-tight">{selectedSession.topic || "Session"}</h3>
+                <p className="text-[10px] text-zinc-400 font-medium">
+                  {selectedSession.createdAt ? new Date(selectedSession.createdAt).toLocaleDateString() : ""}
                 </p>
+              </div>
+
+              <div className="border-t border-b border-zinc-100 py-3.5 space-y-2">
+                <div className="flex justify-between text-xs">
+                  <span className="text-zinc-500">Intent</span>
+                  <span className="font-semibold text-zinc-800">{selectedSession.intent === "CONCEPT_UNDERSTANDING" ? "Concept Understanding" : selectedSession.intent || "General"}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-zinc-500">Status</span>
+                  <span className="font-semibold text-emerald-700">{selectedSession.status}</span>
+                </div>
+              </div>
+
+              <div className="bg-purple-50/30 border border-purple-100/50 rounded-xl p-3 text-xs text-zinc-600 leading-relaxed">
+                <Sparkles className="w-4 h-4 text-purple-500 mb-1" />
+                <span>Session completed on {selectedSession.createdAt ? new Date(selectedSession.createdAt).toLocaleDateString("en-US", { dateStyle: "long" }) : "—"}. Visit the Stuck Map to see what concepts were explored.</span>
               </div>
 
             </motion.div>

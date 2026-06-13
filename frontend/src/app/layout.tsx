@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/lib/theme";
 import { SidebarProvider } from "@/lib/sidebar";
+import { SessionProvider } from "next-auth/react";
 
 export const metadata: Metadata = {
   title: {
@@ -21,12 +22,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="font-sans antialiased">
-        <ThemeProvider>
-          <SidebarProvider>
-            {children}
-          </SidebarProvider>
-        </ThemeProvider>
+        <SessionProvider refetchOnWindowFocus={false}>
+          <ThemeProvider>
+            <SidebarProvider>
+              {children}
+            </SidebarProvider>
+          </ThemeProvider>
+        </SessionProvider>
       </body>
     </html>
   );
 }
+

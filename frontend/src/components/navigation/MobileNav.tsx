@@ -8,7 +8,8 @@ import { LayoutDashboard, Sparkles, Map, Clock, Settings, X, Flame } from "lucid
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/lib/sidebar";
 import { Avatar, ProgressBar } from "@/components/primitives";
-import { MOCK_STUDENT, STUDENT_NAV_SECTIONS } from "@/mock-data";
+import { STUDENT_NAV_SECTIONS } from "@/mock-data";
+import { useSession } from "next-auth/react";
 
 const ICON_MAP: Record<string, React.ElementType> = {
   LayoutDashboard, Sparkles, Map, Clock, Settings,
@@ -66,9 +67,10 @@ export function MobileBottomNav() {
 // Full-screen drawer for mobile — triggered from header
 export function MobileDrawer() {
   const { isMobileOpen, closeMobile } = useSidebar();
+  const { data: session } = useSession();
   const pathname = usePathname();
-  const user = MOCK_STUDENT;
-  const levelProgress = Math.round(((user.xp % 500) / 500) * 100);
+  const userName = session?.user?.name || "Student";
+  const userEmail = session?.user?.email || "";
 
   return (
     <AnimatePresence>
@@ -147,22 +149,11 @@ export function MobileDrawer() {
             {/* User */}
             <div className="p-4 border-t border-[hsl(var(--border))]">
               <div className="flex items-center gap-3 mb-3">
-                <Avatar src={user.avatar} name={user.name} size="md" />
+                <Avatar name={userName} size="md" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold">{user.name}</p>
-                  <p className="text-xs text-[hsl(var(--muted-foreground))]">{user.grade}</p>
+                  <p className="text-sm font-semibold">{userName}</p>
+                  <p className="text-xs text-[hsl(var(--muted-foreground))]">{userEmail}</p>
                 </div>
-                <div className="flex items-center gap-1 text-[hsl(var(--warning))]">
-                  <Flame className="h-4 w-4" />
-                  <span className="text-sm font-bold">{user.streak}</span>
-                </div>
-              </div>
-              <div className="space-y-1">
-                <div className="flex justify-between text-xs">
-                  <span className="text-[hsl(var(--muted-foreground))]">Level {user.level}</span>
-                  <span className="font-medium text-[hsl(var(--primary))]">{user.xp} XP</span>
-                </div>
-                <ProgressBar value={levelProgress} size="sm" />
               </div>
             </div>
           </motion.aside>
