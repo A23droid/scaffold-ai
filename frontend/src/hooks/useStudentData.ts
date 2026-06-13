@@ -26,6 +26,7 @@ export interface StudentData {
   trajectory: TrajectoryData[];
   loading: boolean;
   error: string | null;
+  mutateProfile: (updates: Partial<StudentProfileData>) => void;
 }
 
 export function useStudentData(): StudentData {
