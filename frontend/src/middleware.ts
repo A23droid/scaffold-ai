@@ -17,9 +17,24 @@ export default auth((req) => {
   // Redirect logged-in users away from auth pages
   if (isAuthRoute) {
     if (isLoggedIn) {
+      const role = (req.auth?.user as any)?.role;
+      if (role === "TEACHER") return NextResponse.redirect(new URL("/teacher", req.nextUrl));
+      if (role === "PARENT") return NextResponse.redirect(new URL("/parent", req.nextUrl));
       return NextResponse.redirect(new URL("/dashboard", req.nextUrl));
     }
     return NextResponse.next();
+  }
+
+  // Prevent Parents and Teachers from accessing student-specific pages
+  if (isLoggedIn) {
+    const role = (req.auth?.user as any)?.role;
+    const isStudentRoute = pathname === "/dashboard" || pathname === "/history" || pathname === "/stuck-map";
+    if (isStudentRoute && role === "TEACHER") {
+      return NextResponse.redirect(new URL("/teacher", req.nextUrl));
+    }
+    if (isStudentRoute && role === "PARENT") {
+      return NextResponse.redirect(new URL("/parent", req.nextUrl));
+    }
   }
 
   // Redirect unauthenticated users to login for protected routes

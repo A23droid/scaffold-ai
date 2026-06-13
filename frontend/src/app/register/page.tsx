@@ -49,9 +49,6 @@ export default function RegisterPage() {
       <div className="relative w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/30">
-              <span className="text-white font-black text-sm">S</span>
-            </div>
             <span className="text-white font-bold text-xl tracking-tight">ScaffoldAI</span>
           </div>
           <p className="text-zinc-400 text-sm">Create your account</p>

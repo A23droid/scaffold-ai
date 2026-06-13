@@ -115,6 +115,22 @@ export default function DashboardPage() {
                   You&apos;re making great progress! Keep exploring and resolving your stuck points.
                 </p>
               </div>
+
+              {/* Dynamic Important Number */}
+              <div className="flex items-center gap-4 flex-shrink-0">
+                <div className="flex flex-col items-center justify-center w-20 h-20 rounded-full bg-white/10 backdrop-blur-md border border-white/20 shadow-xl">
+                  <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest mb-1">Level</span>
+                  <span className="text-3xl font-black text-white leading-none">
+                    {profile ? Math.max(1, Math.floor((profile.xp || 0) / 500) + 1) : 1}
+                  </span>
+                </div>
+                <div className="flex flex-col items-center justify-center w-20 h-20 rounded-full bg-pink-500/10 backdrop-blur-md border border-pink-500/20 shadow-xl">
+                  <span className="text-[10px] font-bold text-pink-300 uppercase tracking-widest mb-1">Streak</span>
+                  <span className="text-2xl font-black text-pink-100 leading-none flex items-center gap-1">
+                    {profile?.streak || 0} <span className="text-xl">🔥</span>
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
 

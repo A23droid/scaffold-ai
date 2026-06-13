@@ -86,6 +86,7 @@ class StudentProfile(Base):
     xp = Column(Integer, default=0)
     createdAt = Column(DateTime(timezone=True), default=utc_now)
     lastActiveAt = Column(DateTime(timezone=True), nullable=True)
+    parentEmails = Column(String, nullable=True)
 
     user = relationship("User", back_populates="student_profile")
     parents = relationship("ParentStudent", back_populates="student")

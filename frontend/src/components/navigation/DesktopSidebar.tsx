@@ -12,7 +12,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/lib/sidebar";
 import { Avatar, ProgressBar, Tooltip } from "@/components/primitives";
-import { STUDENT_NAV_SECTIONS } from "@/mock-data";
+import { STUDENT_NAV_SECTIONS, TEACHER_NAV_SECTIONS, PARENT_NAV_SECTIONS } from "@/mock-data";
 import { useSession, signOut } from "next-auth/react";
 import type { NavItem } from "@/types";
 
@@ -62,18 +62,18 @@ export function DesktopSidebar() {
   const userGrade = (session?.user as any)?.grade || "";
   const levelProgress = 0; // Will be updated once profile is fetched
 
+  const navSections = React.useMemo(() => {
+    const role = (session?.user as any)?.role;
+    if (role === "TEACHER") return TEACHER_NAV_SECTIONS;
+    if (role === "PARENT") return PARENT_NAV_SECTIONS;
+    return STUDENT_NAV_SECTIONS;
+  }, [session]);
+
   return (
     <aside className="hidden md:flex flex-col w-[240px] h-screen bg-[hsl(var(--surface))] border-r border-[hsl(var(--border))] relative z-20 flex-shrink-0">
       {/* Logo */}
       <div className="flex items-center h-[var(--header-height)] px-4 flex-shrink-0">
         <Link href="/dashboard" className="flex items-center gap-2.5 min-w-0">
-          <div className="h-8 w-8 rounded-[var(--radius-sm)] gradient-primary flex items-center justify-center flex-shrink-0 shadow-[0_2px_8px_hsl(262_80%_60%/0.3)]">
-            <svg viewBox="0 0 24 24" className="h-4.5 w-4.5 text-white" fill="none" stroke="currentColor" strokeWidth={2.2}>
-              <path d="M12 2L2 7l10 5 10-5-10-5z" />
-              <path d="M2 17l10 5 10-5" />
-              <path d="M2 12l10 5 10-5" />
-            </svg>
-          </div>
           <span className="font-bold text-[15px] tracking-tight text-[hsl(var(--foreground))] overflow-hidden whitespace-nowrap">
             ScaffoldAI
           </span>
@@ -82,7 +82,7 @@ export function DesktopSidebar() {
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto overflow-x-hidden">
-        {STUDENT_NAV_SECTIONS.map((section) => (
+        {navSections.map((section) => (
           <div key={section.id} className="space-y-0.5">
             {section.label && !isCollapsed && (
               <p className="text-[10px] font-semibold uppercase tracking-widest text-[hsl(var(--muted-foreground)/0.6)] px-3 py-2">

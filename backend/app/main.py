@@ -10,7 +10,7 @@ from datetime import datetime, timezone, timedelta
 from sqlalchemy.orm import joinedload
 import bcrypt
 from app.db.database import AsyncSessionLocal
-from app.db.models import User, UserRole, StudentProfile, StudentConceptMastery, StudentMisconception, Session as DBSession, MisconceptionMaster, SessionIntent, InputType, ConceptStatus
+from app.db.models import User, UserRole, StudentProfile, ParentProfile, TeacherProfile, StudentConceptMastery, StudentMisconception, Session as DBSession, MisconceptionMaster, SessionIntent, InputType, ConceptStatus
 from langchain_core.messages import HumanMessage
 from app.services.rule_engine import analyze_student_prompt
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
@@ -138,6 +138,12 @@ async def register(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
             xp=0,
         )
         db.add(stub_profile)
+    elif role == UserRole.PARENT:
+        parent_profile = ParentProfile(userId=new_user.id)
+        db.add(parent_profile)
+    elif role == UserRole.TEACHER:
+        teacher_profile = TeacherProfile(userId=new_user.id)
+        db.add(teacher_profile)
 
     await db.commit()
     await db.refresh(new_user)
@@ -171,6 +177,24 @@ async def login(req: LoginRequest, db: AsyncSession = Depends(get_db)):
 
 # ─── Student data endpoints ────────────────────────────────────────────────────
 
+@app.get("/students")
+async def get_all_students(parent_email: Optional[str] = None, db: AsyncSession = Depends(get_db)):
+    query = select(User, StudentProfile).join(StudentProfile, User.id == StudentProfile.userId).where(User.role == UserRole.STUDENT)
+    
+    if parent_email:
+        query = query.where(StudentProfile.parentEmails.ilike(f"%{parent_email}%"))
+        
+    result = await db.execute(query)
+    students = result.all()
+    return [
+        {
+            "id": p.id,
+            "name": u.name,
+            "email": u.email,
+        }
+        for u, p in students
+    ]
+
 @app.get("/students/{student_id}/profile")
 async def get_student_profile(student_id: str, db: AsyncSession = Depends(get_db)):
     result = await db.execute(
@@ -193,6 +217,7 @@ async def get_student_profile(student_id: str, db: AsyncSession = Depends(get_db
         "learningPace": profile.learningPace,
         "xp": profile.xp,
         "streak": profile.streak,
+        "parentEmails": profile.parentEmails,
         # Level derived from XP (every 500 XP = 1 level)
         "level": max(1, (profile.xp or 0) // 500 + 1),
     }
@@ -204,6 +229,7 @@ class UpdateProfileRequest(BaseModel):
     learningPace: Optional[str] = None
     name: Optional[str] = None
     email: Optional[str] = None
+    parentEmails: Optional[str] = None
 
 @app.patch("/students/{student_id}/profile")
 async def update_student_profile(student_id: str, req: UpdateProfileRequest, db: AsyncSession = Depends(get_db)):
@@ -222,6 +248,8 @@ async def update_student_profile(student_id: str, req: UpdateProfileRequest, db:
         profile.preferredLanguage = req.preferredLanguage
     if req.learningPace is not None:
         profile.learningPace = req.learningPace
+    if req.parentEmails is not None:
+        profile.parentEmails = req.parentEmails
         
     if profile.user:
         if req.name is not None:
@@ -427,6 +455,7 @@ async def create_session(req: CreateSessionRequest, db: AsyncSession = Depends(g
                 student_profile.streak = 1
             
             student_profile.lastActiveAt = now
+            student_profile.xp = (student_profile.xp or 0) + 10
 
         new_session = DBSession(
             studentId=req.student_id,
@@ -516,9 +545,13 @@ async def chat_endpoint(req: ChatRequest, db: AsyncSession = Depends(get_db)):
                 )
                 mastery_record = mastery_result.scalars().first()
                 if mastery_record:
+                    if mastery_record.status != ConceptStatus.KNOWN and status_val == ConceptStatus.KNOWN:
+                        db_profile.xp = (db_profile.xp or 0) + 50
                     mastery_record.status = status_val
                     mastery_record.attempts += 1
                 else:
+                    if status_val == ConceptStatus.KNOWN:
+                        db_profile.xp = (db_profile.xp or 0) + 50
                     new_mastery = StudentConceptMastery(
                         studentId=req.student_id,
                         subject=db_session.subject,

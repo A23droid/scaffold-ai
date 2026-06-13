@@ -391,14 +391,6 @@ export const PARENT_NAV_SECTIONS: NavSection[] = [
     id: "main",
     items: [
       { id: "parent", label: "Overview", href: "/parent", icon: "LayoutDashboard" },
-      { id: "progress", label: "Progress", href: "/parent/progress", icon: "TrendingUp" },
-    ],
-  },
-  {
-    id: "secondary",
-    label: "Account",
-    items: [
-      { id: "settings", label: "Settings", href: "/settings", icon: "Settings" },
     ],
   },
 ];

@@ -8,7 +8,7 @@ import { LayoutDashboard, Sparkles, Map, Clock, Settings, X, Flame } from "lucid
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/lib/sidebar";
 import { Avatar, ProgressBar } from "@/components/primitives";
-import { STUDENT_NAV_SECTIONS } from "@/mock-data";
+import { STUDENT_NAV_SECTIONS, TEACHER_NAV_SECTIONS, PARENT_NAV_SECTIONS } from "@/mock-data";
 import { useSession } from "next-auth/react";
 
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -23,7 +23,14 @@ function MobileNavIcon({ name }: { name: string }) {
 // Bottom tab bar — shows top 4 nav items
 export function MobileBottomNav() {
   const pathname = usePathname();
-  const mainItems = STUDENT_NAV_SECTIONS[0]?.items.slice(0, 4) ?? [];
+  const { data: session } = useSession();
+  const navSections = React.useMemo(() => {
+    const role = (session?.user as any)?.role;
+    if (role === "TEACHER") return TEACHER_NAV_SECTIONS;
+    if (role === "PARENT") return PARENT_NAV_SECTIONS;
+    return STUDENT_NAV_SECTIONS;
+  }, [session]);
+  const mainItems = navSections[0]?.items.slice(0, 4) ?? [];
 
   return (
     <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-[hsl(var(--surface))/0.9] backdrop-blur-xl border-t border-[hsl(var(--border))] pb-safe">
@@ -72,6 +79,13 @@ export function MobileDrawer() {
   const userName = session?.user?.name || "Student";
   const userEmail = session?.user?.email || "";
 
+  const navSections = React.useMemo(() => {
+    const role = (session?.user as any)?.role;
+    if (role === "TEACHER") return TEACHER_NAV_SECTIONS;
+    if (role === "PARENT") return PARENT_NAV_SECTIONS;
+    return STUDENT_NAV_SECTIONS;
+  }, [session]);
+
   return (
     <AnimatePresence>
       {isMobileOpen && (
@@ -96,13 +110,6 @@ export function MobileDrawer() {
             {/* Header */}
             <div className="flex items-center justify-between h-[var(--header-height)] px-5">
               <div className="flex items-center gap-2.5">
-                <div className="h-8 w-8 rounded-[var(--radius-sm)] gradient-primary flex items-center justify-center flex-shrink-0">
-                  <svg viewBox="0 0 24 24" className="h-4.5 w-4.5 text-white" fill="none" stroke="currentColor" strokeWidth={2.2}>
-                    <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                    <path d="M2 17l10 5 10-5" />
-                    <path d="M2 12l10 5 10-5" />
-                  </svg>
-                </div>
                 <span className="font-bold text-[15px]">ScaffoldAI</span>
               </div>
               <button
@@ -115,7 +122,7 @@ export function MobileDrawer() {
 
             {/* Nav */}
             <nav className="flex-1 px-4 py-2 space-y-1 overflow-y-auto">
-              {STUDENT_NAV_SECTIONS.map((section) => (
+              {navSections.map((section) => (
                 <div key={section.id} className="space-y-0.5">
                   {section.label && (
                     <p className="text-[10px] font-semibold uppercase tracking-widest text-[hsl(var(--muted-foreground)/0.6)] px-3 py-2">

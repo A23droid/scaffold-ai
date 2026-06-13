@@ -12,6 +12,17 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+export interface StudentListItem {
+  id: string;
+  name: string;
+  email: string;
+}
+
+export async function apiGetStudents(parentEmail?: string) {
+  const query = parentEmail ? `?parent_email=${encodeURIComponent(parentEmail)}` : "";
+  return apiFetch<StudentListItem[]>(`/students${query}`);
+}
+
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
 export interface RegisterPayload {
@@ -44,6 +55,7 @@ export interface StudentProfileData {
   xp: number;
   streak: number;
   level: number;
+  parentEmails: string | null;
 }
 
 export function apiGetStudentProfile(studentProfileId: string) {

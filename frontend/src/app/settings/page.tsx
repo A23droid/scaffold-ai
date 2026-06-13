@@ -43,12 +43,10 @@ export default function Page() {
       const formData = new FormData(e.currentTarget);
       const paceMap: Record<string, string> = { "Relaxed": "SLOW", "Balanced": "MEDIUM", "Fast": "FAST" };
       const updates = {
-        grade: formData.get("grade") as string,
-        board: formData.get("board") as string,
-        preferredLanguage: formData.get("language") as string,
         learningPace: paceMap[formData.get("pace") as string] || "MEDIUM",
         name: formData.get("name") as string,
         email: formData.get("email") as string,
+        parentEmails: formData.get("parentEmails") as string,
       };
       await apiUpdateStudentProfile(profile.id, updates);
       mutateProfile(updates);
@@ -82,13 +80,7 @@ export default function Page() {
         </header>
 
         <form onSubmit={handleSubmit} className="grid gap-5 lg:grid-cols-[1fr_1fr]">
-          <SettingsCard title="Academic Profile">
-            <div className="grid gap-4 sm:grid-cols-3">
-              <SelectField label="Grade" name="grade" id="grade" options={gradeOptions} defaultValue={profile?.grade || gradeOptions[0]} />
-              <SelectField label="Board" name="board" id="board" options={boardOptions} defaultValue={profile?.board || boardOptions[0]} />
-              <SelectField label="Language" name="language" id="language" options={languageOptions} defaultValue={profile?.preferredLanguage || languageOptions[0]} />
-            </div>
-          </SettingsCard>
+
 
           <SettingsCard title="Appearance">
             <SegmentedRadio name="appearance" options={appearance} defaultValue="System" />
@@ -125,6 +117,12 @@ export default function Page() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <TextField label="Name" name="name" id="name" defaultValue={profile?.name || ""} />
                 <TextField label="Email" name="email" id="email" defaultValue={profile?.email || ""} type="email" />
+              </div>
+              <div className="pt-2 border-t border-[hsl(var(--border-subtle))]">
+                <p className="text-xs text-zinc-500 mb-4 leading-relaxed">
+                  <strong>Parent Access:</strong> You can securely grant your parents access to view your dashboard by entering their registered email addresses below.
+                </p>
+                <TextField label="Parent Emails (comma separated)" name="parentEmails" id="parentEmails" defaultValue={profile?.parentEmails || ""} placeholder="parent1@example.com, parent2@example.com" />
               </div>
               <div className="flex items-center justify-between border-t border-[hsl(var(--border-subtle))] pt-5">
                 <Button variant="outline" type="button" className="bg-white/45 text-[hsl(var(--danger))] hover:bg-[hsl(var(--danger)/0.08)]">
@@ -207,21 +205,24 @@ function TextField({
   id,
   defaultValue,
   type = "text",
+  placeholder,
 }: {
   label: string;
   name: string;
   id: string;
   defaultValue: string;
   type?: string;
+  placeholder?: string;
 }) {
   return (
     <label className="block space-y-2" htmlFor={id}>
       <span className="text-xs font-medium text-[hsl(var(--muted-foreground))]">{label}</span>
       <input
-        id={id}
-        name={name}
         type={type}
+        name={name}
+        id={id}
         defaultValue={defaultValue}
+        placeholder={placeholder}
         className="h-12 w-full rounded-[14px] border border-[hsl(var(--border))] bg-[hsl(var(--background)/0.76)] px-4 text-sm font-medium text-[hsl(var(--foreground))] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] outline-none transition placeholder:text-[hsl(var(--muted-foreground))] focus:border-[hsl(var(--primary)/0.65)] focus:ring-4 focus:ring-[hsl(var(--primary)/0.12)]"
       />
     </label>

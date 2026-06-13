@@ -29,7 +29,7 @@ export interface StudentData {
   mutateProfile: (updates: Partial<StudentProfileData>) => void;
 }
 
-export function useStudentData(): StudentData {
+export function useStudentData(studentIdOverride?: string): StudentData {
   const { data: session, status } = useSession();
   const [profile, setProfile] = useState<StudentProfileData | null>(null);
   const [sessions, setSessions] = useState<SessionData[]>([]);
@@ -40,7 +40,7 @@ export function useStudentData(): StudentData {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const sid = (session?.user as any)?.studentProfileId;
+  const sid = studentIdOverride || (session?.user as any)?.studentProfileId;
 
   useEffect(() => {
     if (status !== "authenticated") return;
