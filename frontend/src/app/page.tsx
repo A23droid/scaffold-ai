@@ -19,7 +19,8 @@ import {
   ArrowRight,
   HelpCircle,
   CheckCircle2,
-  Calendar
+  Calendar,
+  BrainCircuit
 } from "lucide-react";
 
 // Demo constants for the landing page marketing showcase
