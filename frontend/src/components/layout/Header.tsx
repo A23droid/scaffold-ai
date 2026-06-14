@@ -1,10 +1,10 @@
 "use client";
 
 import React from "react";
-import { Menu, Bell, Sun, Moon, Search } from "lucide-react";
+import { Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/lib/sidebar";
-import { useTheme } from "@/lib/theme";
+import Link from "next/link";
 import { Avatar, Tooltip } from "@/components/primitives";
 import { useSession } from "next-auth/react";
 import { useStudentData } from "@/hooks/useStudentData";
@@ -19,12 +19,9 @@ interface HeaderProps {
 
 export function Header({ title, subtitle, actions, className }: HeaderProps) {
   const { toggleMobile } = useSidebar();
-  const { resolvedTheme, toggleTheme } = useTheme();
   const { data: session } = useSession();
   const { profile } = useStudentData();
   const userName = session?.user?.name || "Student";
-  const userEmail = session?.user?.email || "";
-  const userInitials = userName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase();
 
   return (
     <header
@@ -59,8 +56,6 @@ export function Header({ title, subtitle, actions, className }: HeaderProps) {
         )}
       </div>
 
-      {/* Search — desktop (Removed) */}
-
       <div className="flex items-center gap-1.5 sm:gap-2">
         {/* Streak Counter */}
         {profile && profile.streak > 0 && (
@@ -73,26 +68,15 @@ export function Header({ title, subtitle, actions, className }: HeaderProps) {
         )}
 
         {actions && <div className="flex items-center mr-1">{actions}</div>}
-        <Tooltip content={resolvedTheme === "light" ? "Switch to dark" : "Switch to light"}>
-          <button
-            onClick={toggleTheme}
-            className="h-9 w-9 flex items-center justify-center rounded-[var(--radius-sm)] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--foreground))] transition-colors"
-            aria-label="Toggle theme"
-          >
-            {resolvedTheme === "light" ? (
-              <Moon className="h-4.5 w-4.5" />
-            ) : (
-              <Sun className="h-4.5 w-4.5" />
-            )}
-          </button>
-        </Tooltip>
 
-        {/* Notifications (Removed) */}
-
-        {/* Avatar */}
-        <button className="ml-1 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))]">
+        {/* Avatar → /settings */}
+        <Link
+          href="/settings"
+          className="ml-1 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))]"
+          aria-label="Go to settings"
+        >
           <Avatar name={userName} size="sm" />
-        </button>
+        </Link>
       </div>
     </header>
   );

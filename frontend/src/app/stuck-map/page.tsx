@@ -64,7 +64,7 @@ export default function StuckMapPage() {
 
             <div className="space-y-4">
               {misconceptions.length === 0 ? (
-                <p className="text-sm text-zinc-400 text-center py-6">No misconceptions tracked yet. Start a Socratic session to build your map. <Link href="/session" className="text-purple-600 font-semibold">Start now →</Link></p>
+                <p className="text-sm text-zinc-400 text-center py-6">No misconceptions tracked yet. Start a Socratic session to build your map. <Link href="/dashboard" className="text-purple-600 font-semibold">Start now →</Link></p>
               ) : misconceptions.map((m) => (
                 <div key={m.id} className="border border-zinc-100 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-purple-200 transition-colors">
                   <div className="space-y-1.5">
