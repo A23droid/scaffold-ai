@@ -116,6 +116,26 @@ def concept_evaluator_node(state: GraphState) -> GraphState:
                 states[update.concept] = update.status
     except Exception as e:
         print(f"Warning: Concept Evaluator failed to parse structured output: {e}")
+        # Groq fallback: manually extract and fix malformed JSON
+        import re
+        import json
+        match = re.search(r"failed_generation':\s*'<function=ConceptEvaluatorOutput>(.*?)</function>'", str(e))
+        if match:
+            json_str = match.group(1).strip()
+            if json_str.startswith('["updates":'):
+                json_str = "{" + json_str[1:]
+            if json_str.endswith(']]'):
+                json_str = json_str[:-2] + ']}'
+            try:
+                data = json.loads(json_str)
+                for update in data.get("updates", []):
+                    concept = update.get("concept")
+                    status = update.get("status")
+                    if concept in states and status:
+                        states[concept] = status
+                print("Successfully recovered and parsed ConceptEvaluator fallback!")
+            except Exception as inner_e:
+                print(f"Fallback parsing failed: {inner_e}")
             
     state["concept_states"] = states
     return state
