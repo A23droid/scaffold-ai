@@ -146,6 +146,18 @@ def diagnosis_node(state: GraphState) -> GraphState:
     if not messages:
         return state
         
+    # Dynamically increment failed attempts
+    session = state.get("session")
+    if session:
+        is_dict = isinstance(session, dict)
+        current_attempts = session.get("failed_attempts", 0) if is_dict else getattr(session, "failed_attempts", 0)
+        if is_dict:
+            session["failed_attempts"] = current_attempts + 1
+        else:
+            session.failed_attempts = current_attempts + 1
+        state["session"] = session
+
+        
     sys_prompt = _build_system_prompt(state, "Diagnostician. Determine required concept, likely misconceptions, and ask ONE diagnostic question.")
     
     structured_model = grok_model.with_structured_output(DiagnosisOutput)
@@ -186,6 +198,16 @@ def socratic_node(state: GraphState) -> GraphState:
     """Generates the next guiding question."""
     messages = state.get("messages", [])
     diagnosis = state.get("diagnosis", {})
+    
+    # Reset failed attempts because they successfully made it to the Socratic tutor
+    session = state.get("session")
+    if session:
+        is_dict = isinstance(session, dict)
+        if is_dict:
+            session["failed_attempts"] = 0
+        else:
+            session.failed_attempts = 0
+        state["session"] = session
     current_misconception = state.get("current_misconception")
     concept_states = state.get("concept_states")
     

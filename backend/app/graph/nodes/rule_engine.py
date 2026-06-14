@@ -16,21 +16,6 @@ def rule_engine_node(state: GraphState) -> GraphState:
     failed_attempts = session.get("failed_attempts", 0) if is_session_dict else session.failed_attempts
     max_attempts = session.get("max_attempts_before_hint", 3) if is_session_dict else session.max_attempts_before_hint
     
-    # Analyze the latest student message
-    if messages:
-        latest_message = messages[-1].content.lower()
-        
-        # RULE 1: Sign Error Interception (Deterministic Regex)
-        if "2" in latest_message and "3" in latest_message and "-2" not in latest_message and "-3" not in latest_message:
-            state["current_misconception"] = "SIGN_ERROR"
-            state["next_action"] = "socratic"
-            return state
-            
-        # RULE 2: Correct progression detected
-        if "-2" in latest_message and "-3" in latest_message:
-            state["understanding"] = state.get("understanding", 0) + 1
-            state["next_action"] = "socratic" # LLM will validate the logic
-            return state
 
     # 1. Determine next action based on failed attempts
     if failed_attempts >= max_attempts:

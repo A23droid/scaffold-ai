@@ -525,14 +525,19 @@ async def chat_endpoint(req: ChatRequest, db: AsyncSession = Depends(get_db)):
     
     user_msg = HumanMessage(content=req.message)
     
+    config = {"configurable": {"thread_id": req.session_id}}
+    
+    existing_state_snapshot = await app_workflow.aget_state(config)
+    
     input_state = {
         "messages": [user_msg],
         "input_type": "text",
-        "profile": profile_ctx,
-        "session": session_ctx,
     }
     
-    config = {"configurable": {"thread_id": req.session_id}}
+    if not existing_state_snapshot or not existing_state_snapshot.values.get("session"):
+        input_state["profile"] = profile_ctx
+        input_state["session"] = session_ctx
+    
     
     try:
         final_state = await app_workflow.ainvoke(input_state, config=config)
