@@ -79,16 +79,18 @@ def concept_graph_generator_node(state: GraphState) -> GraphState:
     sys_prompt = f"You are a master curriculum designer. The student is learning '{session.subject}' and the topic is '{session.topic}'. Break this topic down into a micro-graph of 4-7 fundamental concepts. For each concept, list any prerequisites from within this same list."
     
     structured_model = grok_model.with_structured_output(ConceptGraphOutput)
-    response = structured_model.invoke([SystemMessage(content=sys_prompt)])
-    
-    graph_dict = {}
-    states_dict = {}
-    for c in response.concepts:
-        graph_dict[c.name] = {"prerequisites": c.prerequisites}
-        states_dict[c.name] = "UNKNOWN" # Default state
-        
-    state["concept_graph"] = graph_dict
-    state["concept_states"] = states_dict
+    try:
+        response = structured_model.invoke([SystemMessage(content=sys_prompt)])
+        graph_dict = {}
+        states_dict = {}
+        for c in response.concepts:
+            graph_dict[c.name] = {"prerequisites": c.prerequisites}
+            states_dict[c.name] = "UNKNOWN" # Default state
+            
+        state["concept_graph"] = graph_dict
+        state["concept_states"] = states_dict
+    except Exception as e:
+        print(f"Warning: Concept Graph Generator failed to parse structured output: {e}")
     
     return state
 
@@ -107,11 +109,13 @@ def concept_evaluator_node(state: GraphState) -> GraphState:
     sys_prompt = f"You are a Knowledge Tracing Engine. Evaluate the student's latest response against the concept graph: {graph_str}. Current states: {current_states_str}. Which concepts did their response prove they know, partially know, don't know, or hold a misconception about? Output ONLY the state updates."
     
     structured_model = grok_model.with_structured_output(ConceptEvaluatorOutput)
-    response = structured_model.invoke([SystemMessage(content=sys_prompt)] + messages)
-    
-    for update in response.updates:
-        if update.concept in states:
-            states[update.concept] = update.status
+    try:
+        response = structured_model.invoke([SystemMessage(content=sys_prompt)] + messages)
+        for update in response.updates:
+            if update.concept in states:
+                states[update.concept] = update.status
+    except Exception as e:
+        print(f"Warning: Concept Evaluator failed to parse structured output: {e}")
             
     state["concept_states"] = states
     return state
@@ -125,31 +129,35 @@ def diagnosis_node(state: GraphState) -> GraphState:
     sys_prompt = _build_system_prompt(state, "Diagnostician. Determine required concept, likely misconceptions, and ask ONE diagnostic question.")
     
     structured_model = grok_model.with_structured_output(DiagnosisOutput)
-    response = structured_model.invoke([SystemMessage(content=sys_prompt)] + messages)
+    try:
+        response = structured_model.invoke([SystemMessage(content=sys_prompt)] + messages)
+        
+        # Store the structured JSON diagnosis in state
+        
+        # Safely parse the possibleMisconceptions string into a list
+        misconceptions = []
+        if response.possibleMisconceptions:
+            # Sometimes the model still outputs a stringified JSON array, try to parse it
+            if response.possibleMisconceptions.strip().startswith("["):
+                try:
+                    import json
+                    misconceptions = json.loads(response.possibleMisconceptions)
+                except:
+                    misconceptions = [response.possibleMisconceptions]
+            else:
+                misconceptions = [response.possibleMisconceptions]
+                
+        state["diagnostic_state"] = {
+            "requiredConcept": response.requiredConcept,
+            "possibleMisconceptions": misconceptions,
+            "diagnosticQuestion": response.question
+        }
+        
+        # Append the question as the AI's response so the user sees it
+        state["messages"].append(AIMessage(content=response.question))
+    except Exception as e:
+        print(f"Warning: Diagnosis node failed to parse structured output: {e}")
     
-    # Store the structured JSON diagnosis in state
-    
-    # Safely parse the possibleMisconceptions string into a list
-    misconceptions = []
-    if response.possibleMisconceptions:
-        # Sometimes the model still outputs a stringified JSON array, try to parse it
-        if response.possibleMisconceptions.strip().startswith("["):
-            try:
-                import json
-                misconceptions = json.loads(response.possibleMisconceptions)
-            except:
-                misconceptions = [m.strip() for m in response.possibleMisconceptions.split(",") if m.strip()]
-        else:
-            misconceptions = [m.strip() for m in response.possibleMisconceptions.split(",") if m.strip()]
-
-    state["diagnosis"] = {
-        "requiredConcept": response.requiredConcept,
-        "possibleMisconceptions": misconceptions,
-        "question": response.question
-    }
-    
-    # Append the question as the AI's response so the user sees it
-    state["messages"].append(AIMessage(content=response.question))
     state["current_stage"] = "diagnosis"
     
     return state

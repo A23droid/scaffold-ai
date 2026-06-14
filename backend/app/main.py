@@ -35,7 +35,14 @@ async def lifespan(app: FastAPI):
         postgres_pool = AsyncConnectionPool(
             conninfo=db_url,
             max_size=20,
-            kwargs={"autocommit": True}
+            open=False,
+            kwargs={
+                "autocommit": True,
+                "keepalives": 1,
+                "keepalives_idle": 30,
+                "keepalives_interval": 10,
+                "keepalives_count": 5
+            }
         )
         await postgres_pool.open()
         checkpointer = AsyncPostgresSaver(postgres_pool)
