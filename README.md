@@ -1,30 +1,46 @@
 # Scaffold AI
 
-Scaffold AI is an advanced, AI-driven project scaffolding platform designed to accelerate development workflows. By leveraging state-of-the-art language models and graph-based execution pipelines, it enables automated generation, structuring, and management of complex software projects.
+Scaffold AI is an advanced, AI-driven educational platform designed to act as a personalized Socratic tutor. By leveraging state-of-the-art language models and graph-based execution pipelines, it provides **instructional scaffolding**—guiding students to understand complex concepts and solve problems on their own without simply spoon-feeding them the answers.
+
+## Key Features
+
+- **Concept Graph Generation:** Dynamically breaks down topics into micro-graphs of fundamental concepts and prerequisites.
+- **Knowledge Tracing Engine:** Evaluates student responses to update their mastery states (Known, Partial, Unknown, Misconception) in real-time.
+- **Socratic Diagnostician:** Identifies exactly where a student is stuck and asks targeted questions to prompt critical thinking.
+- **Rule Engine:** Deterministically catches common mistakes (like sign errors in math) to provide immediate, context-aware intervention.
+- **Student Profiling:** Adapts pacing, strictness, and hints based on the student's historical performance and weak topics.
 
 ## Architecture Overview
 
-The system is built on a modern, decoupled architecture, utilizing a robust frontend for user interactions and a highly concurrent backend for executing AI workloads and managing state.
+The system is built on a modern, decoupled architecture, utilizing a robust frontend for student interactions and a highly concurrent backend for executing AI workloads, tracing knowledge, and managing state.
 
 ```mermaid
 graph TD
-    Client[Client Browser]
+    Client[Student Browser]
     
     subgraph Frontend [Frontend - Next.js]
-        UI[React UI Components]
+        UI[React Chat/Dashboard Components]
         Auth[Next-Auth]
-        State[Client State / Data Fetching]
+        State[Client State / Session Management]
         UI --> Auth
         UI --> State
     end
 
     subgraph Backend [Backend - FastAPI]
         API[FastAPI Endpoints]
-        Graph[LangGraph Execution Engine]
+        Graph[LangGraph Tutor Engine]
         DB[(SQLite DB / Alembic)]
         Checkpoint[(LangGraph Checkpoints)]
+        
+        RuleEngine[Deterministic Rule Engine]
+        ConceptEval[Concept Evaluator / Tracer]
+        Socratic[Socratic / Hint Nodes]
+        
         API --> Graph
         API --> DB
+        Graph --> RuleEngine
+        Graph --> ConceptEval
+        Graph --> Socratic
         Graph --> Checkpoint
     end
     
@@ -40,7 +56,7 @@ graph TD
 ## Technology Stack
 
 ### Frontend
-- **Framework:** Next.js
+- **Framework:** Next.js (React)
 - **Styling:** Tailwind CSS, Radix UI Primitives, Framer Motion
 - **Authentication:** Next-Auth
 - **Data Visualization:** Recharts
@@ -49,11 +65,11 @@ graph TD
 
 ### Backend
 - **Framework:** FastAPI
-- **AI / LLM:** LangGraph, LangChain, Groq
+- **AI / LLM Orchestration:** LangGraph, LangChain, Groq (Llama 3.1)
 - **Database:** SQLite (with AsyncIO support via aiosqlite)
 - **ORM & Migrations:** SQLAlchemy, Alembic
 - **State Management:** LangGraph Checkpoints
-- **Language:** Python
+- **Language:** Python 3.10+
 
 ## Getting Started
 
@@ -79,7 +95,7 @@ graph TD
    ```bash
    pip install -r requirements.txt
    ```
-4. Configure environment variables. Create a `.env` file in the `backend` directory based on the project requirements (e.g., setting Groq API keys, database URLs).
+4. Configure environment variables. Create a `.env` file in the `backend` directory (ensure `GROQ_API_KEY` is set).
 5. Run database migrations:
    ```bash
    alembic upgrade head
@@ -104,13 +120,6 @@ graph TD
    ```bash
    npm run dev
    ```
-
-## Development
-
-The repository is structured to enforce clear separation of concerns:
-- **`backend/app/`**: Contains the FastAPI application, database models, LangGraph nodes, and core business logic.
-- **`backend/alembic/`**: Houses database migration scripts.
-- **`frontend/src/`**: Contains React components, Next.js routing configurations, and application assets.
 
 ## License
 
