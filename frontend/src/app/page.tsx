@@ -37,21 +37,8 @@ const DEMO_SUBJECT_PROGRESS = [
 ];
 
 export default function LandingPage() {
-  const [email, setEmail] = useState("");
-  const [isSubmitted, setIsSubmitted] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [expandedStuckPoint, setExpandedStuckPoint] = useState<string | null>("stuck-1");
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email.trim()) {
-      setIsSubmitted(true);
-      setTimeout(() => {
-        setIsSubmitted(false);
-        setEmail("");
-      }, 3000);
-    }
-  };
 
   // Generate 7x15 heatmap cells with mock activity levels
   const heatmapData = Array.from({ length: 105 }, (_, i) => {
@@ -113,7 +100,7 @@ export default function LandingPage() {
           transition={{ duration: 0.6, ease: "easeOut" }}
           className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-100/60 border border-purple-200/50 text-[13px] font-medium text-purple-700 hover:bg-purple-100/80 transition-all cursor-pointer shadow-sm mb-8 hover:scale-[1.01]"
         >
-          <Sparkles className="w-3.5 h-3.5 text-purple-500 animate-pulse" />
+          <BrainCircuit className="w-3.5 h-3.5 text-purple-500 animate-pulse" />
           <span>Now helping students learn without answer dependency</span>
           <ChevronRight className="w-3.5 h-3.5 text-purple-400" />
         </motion.div>
@@ -147,33 +134,26 @@ export default function LandingPage() {
           transition={{ duration: 0.8, delay: 0.3 }}
           className="w-full max-w-md px-4"
         >
-          <form onSubmit={handleSubmit} className="relative flex items-center p-1.5 rounded-full bg-white border border-zinc-200/80 shadow-[0_12px_32px_rgba(120,80,200,0.06)] hover:border-purple-300/80 focus-within:border-purple-400 focus-within:ring-4 focus-within:ring-purple-100 transition-all">
-            <input 
-              type="email" 
-              placeholder="Enter your email" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full pl-5 pr-4 py-2.5 bg-transparent text-zinc-800 placeholder-zinc-400 focus:outline-none text-sm font-medium"
-              required
-            />
-            <button 
-              type="submit"
-              className="bg-gradient-to-r from-purple-600 to-pink-500 text-white font-medium text-sm px-6 py-2.5 rounded-full hover:opacity-95 active:scale-[0.98] transition-all whitespace-nowrap shadow-[0_2px_8px_rgba(168,85,247,0.3)] flex items-center gap-1.5"
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link 
+              href="/register" 
+              className="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-pink-500 text-white font-medium text-[15px] px-8 py-3 rounded-full hover:opacity-95 active:scale-[0.98] transition-all shadow-[0_4px_12px_rgba(168,85,247,0.3)] flex items-center justify-center gap-2"
             >
-              {isSubmitted ? (
-                <>
-                  <Check className="w-4 h-4" />
-                  Joined!
-                </>
-              ) : (
-                "Get Started"
-              )}
-            </button>
-          </form>
+              Start Learning Now
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+            
+            <Link 
+              href="/login" 
+              className="w-full sm:w-auto bg-white border border-zinc-200/80 text-zinc-800 font-medium text-[15px] px-8 py-3 rounded-full hover:bg-zinc-50 active:scale-[0.98] transition-all shadow-sm flex items-center justify-center"
+            >
+              Log In
+            </Link>
+          </div>
 
           {/* Secondary Text */}
-          <div className="text-zinc-500 text-xs mt-4 flex items-center justify-center gap-2">
-            <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+          <div className="text-zinc-500 text-xs mt-5 flex items-center justify-center gap-2">
+            <CheckCircle2 className="w-3.5 h-3.5 text-purple-400" />
             <span>Free for students during beta.</span>
           </div>
         </motion.div>
